@@ -1,7 +1,8 @@
 package com.example.croft.recorder;
 
-import android.content.Context;
 import android.content.Intent;
+import android.media.MediaPlayer;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,24 +13,22 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import android.widget.Toast;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public JSONObject jos = null;
-    public JSONArray ja = null;
     private ListView list;
     TextView text;
+    MediaPlayer mediaPlayer = new MediaPlayer();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,21 +40,28 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         TextView text = findViewById(R.id.empty);
         text.setVisibility(View.INVISIBLE);
-
-        jos = null;
         try{
             // Reading a file that already exists
             File f = new File(getFilesDir(), "file.ser");
             FileInputStream fi = new FileInputStream(f);
             ObjectInputStream o = new ObjectInputStream(fi);
-            String j = null;
             int count = 0;
             try{
-                j = (String) o.readObject();
-                count = Integer.parseInt(j);
+                count = (int) o.readObject();
             }
             catch(ClassNotFoundException c){
                 c.printStackTrace();
+                try {
+                    // Reading a file that already exists
+                    //File f = new File(getFilesDir(), "file.ser");
+                    FileOutputStream fo = new FileOutputStream(f);
+                    ObjectOutputStream os = new ObjectOutputStream(fo);
+                    os.writeObject(0);
+                    Toast.makeText(MainActivity.this, "writing 0 to file.ser", Toast.LENGTH_SHORT);
+
+                } catch (IOException ie) {
+                    ie.printStackTrace();
+                }
             }
 
             if (count == 0) {
@@ -74,33 +80,29 @@ public class MainActivity extends AppCompatActivity {
                 ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, aList);
                 list.setAdapter(adapter);
 
-                // Set an OnItemClickListener for each of the list items
-                final Context context = this;
                 list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        //mediaPlayer = new MediaPlayer();
                         try {
-                            JSONObject tmp = ja.getJSONObject(position);
-
-                            Intent detailIntent = new Intent(context, DetailsActivity.class);
-                            detailIntent.putExtra("title", tmp.getString("title"));
-                            detailIntent.putExtra("desc", tmp.getString("desc"));
-                            detailIntent.putExtra("time", tmp.getString("time"));
-                            detailIntent.putExtra("date", tmp.getString("date"));
-                            detailIntent.putExtra("gps", tmp.getString("gps"));
-                            detailIntent.putExtra("index", position);
-                            startActivity(detailIntent);
-
-                        } catch (JSONException e) {
+                            mediaPlayer.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()
+                                    + "/" + (position+1) + ".3gp");
+                            mediaPlayer.prepare();
+                        } catch (IOException e) {
                             e.printStackTrace();
+                        } catch (IllegalStateException e){
+
                         }
+                        mediaPlayer.start();
+                        //Toast.makeText(MainActivity.this, "Playing", Toast.LENGTH_SHORT).show();
                     }
 
                 });
             }
         }
         catch(IOException e){
+
             list.setEnabled(false);
             list.setVisibility(View.INVISIBLE);
             text.setVisibility(View.VISIBLE);
