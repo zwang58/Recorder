@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -32,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         list = findViewById(R.id.mainList);
-
     }
 
     protected void onResume(){
@@ -47,21 +49,16 @@ public class MainActivity extends AppCompatActivity {
             FileInputStream fi = new FileInputStream(f);
             ObjectInputStream o = new ObjectInputStream(fi);
             String j = null;
+            int count = 0;
             try{
                 j = (String) o.readObject();
+                count = Integer.parseInt(j);
             }
             catch(ClassNotFoundException c){
                 c.printStackTrace();
             }
-            try {
-                jos = new JSONObject(j);
-                ja = jos.getJSONArray("data");
-            }
-            catch(JSONException e){
-                e.printStackTrace();
-            }
 
-            if (ja.length() == 0) {
+            if (count == 0) {
                 list.setEnabled(false);
                 list.setVisibility(View.INVISIBLE);
                 text.setVisibility(View.VISIBLE);
@@ -69,12 +66,8 @@ public class MainActivity extends AppCompatActivity {
             }else {
                 // Show the list
                 final List<String> aList = new ArrayList<>();
-                for (int i = 0; i < ja.length(); i++) {
-                    try {
-                        aList.add(ja.getJSONObject(i).getString("title"));
-                    } catch (JSONException e1) {
-                        e1.printStackTrace();
-                    }
+                for (int i = 0; i < count; i++) {
+                    aList.add("Audio Recording "+ (i+1));
                 }
 
                 // Show the list view with the each list item an element from listItems
@@ -112,6 +105,30 @@ public class MainActivity extends AppCompatActivity {
             list.setVisibility(View.INVISIBLE);
             text.setVisibility(View.VISIBLE);
         }
+    }
+
+    // This method will just show the menu item (which is our button "ADD")
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        // the menu being referenced here is the menu.xml from res/menu/menu.xml
+        inflater.inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.add:
+                Intent i = new Intent(this, WebActivity.class);
+                startActivity(i);
+            default:
+                super.onOptionsItemSelected(item);
+        }
+        return true;
     }
 
 }
