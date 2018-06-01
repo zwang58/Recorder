@@ -10,6 +10,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -28,7 +29,7 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 public class WebActivity extends AppCompatActivity {
 
-    static final public String WEBPAGE = "https://cnn.com";
+    static final public String WEBPAGE = "https://users.soe.ucsc.edu/~dustinadams/CMPS121/assignment3/www/index.html";
     WebView web;
     String AudioSavePathInDevice = null;
     MediaRecorder mediaRecorder;
@@ -48,10 +49,8 @@ public class WebActivity extends AppCompatActivity {
     }
 
     public class JavaScriptInterface {
-        Context mContext; // Having the context is useful for lots of things,
-        // like accessing preferences.
+        Context mContext;
 
-        /** Instantiate the interface and set the context */
         JavaScriptInterface(Context c) {
             mContext = c;
         }
@@ -91,7 +90,7 @@ public class WebActivity extends AppCompatActivity {
                 File f = new File(getFilesDir(), "file.ser");
                 FileOutputStream fo = new FileOutputStream(f);
                 ObjectOutputStream o = new ObjectOutputStream(fo);
-                o.writeObject(fileIndex);
+                o.writeObject(Integer.toString(fileIndex));
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -109,15 +108,15 @@ public class WebActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            mediaPlayer.start();// play the audio
+            mediaPlayer.start();
             Toast.makeText(mContext, "Playing", Toast.LENGTH_SHORT).show();
         }
 
         @JavascriptInterface
         public void stoprec(){
             if(mediaPlayer != null){
-                mediaPlayer.stop(); // stop audio
-                mediaPlayer.release(); // free up memory
+                mediaPlayer.stop();
+                mediaPlayer.release();
                 MediaRecorderReady();
             }
             Toast.makeText(mContext, "Stopping Playback", Toast.LENGTH_SHORT).show();
@@ -133,7 +132,7 @@ public class WebActivity extends AppCompatActivity {
     }
 
     public void MediaRecorderReady(){
-        mediaRecorder=new MediaRecorder();
+        mediaRecorder = new MediaRecorder();
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mediaRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
@@ -150,13 +149,13 @@ public class WebActivity extends AppCompatActivity {
             FileInputStream fi = new FileInputStream(f);
             ObjectInputStream o = new ObjectInputStream(fi);
 
-            try {
-                fileIndex = (int) o.readObject() + 1;
-            } catch (ClassNotFoundException c) {
-                c.printStackTrace();
-            }
+            String storedindex = (String) o.readObject();
+            fileIndex = Integer.parseInt(storedindex) + 1;
+            Log.d("WebActivity", "stored index was " + storedindex);
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

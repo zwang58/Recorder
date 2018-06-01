@@ -5,6 +5,7 @@ import android.media.MediaPlayer;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -14,6 +15,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ListView list;
     TextView text;
-    MediaPlayer mediaPlayer = new MediaPlayer();
+    MediaPlayer mediaPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,30 +44,38 @@ public class MainActivity extends AppCompatActivity {
         TextView text = findViewById(R.id.empty);
         text.setVisibility(View.INVISIBLE);
         try{
-            // Reading a file that already exists
+
             File f = new File(getFilesDir(), "file.ser");
-            FileInputStream fi = new FileInputStream(f);
-            ObjectInputStream o = new ObjectInputStream(fi);
-            int count = 0;
-            try{
-                count = (int) o.readObject();
-            }
-            catch(ClassNotFoundException c){
-                c.printStackTrace();
+            Log.d("Main", "file length is " + f.length());
+            if (f.length() == 0){
                 try {
-                    // Reading a file that already exists
-                    //File f = new File(getFilesDir(), "file.ser");
+
                     FileOutputStream fo = new FileOutputStream(f);
                     ObjectOutputStream os = new ObjectOutputStream(fo);
-                    os.writeObject(0);
-                    Toast.makeText(MainActivity.this, "writing 0 to file.ser", Toast.LENGTH_SHORT);
+                    os.writeObject(Integer.toString(0));
+                    os.close();
+                    fo.close();
+                    Log.d("Main", "file length is now " + f.length());
 
                 } catch (IOException ie) {
                     ie.printStackTrace();
                 }
             }
 
+            int count = 0;
+            try{
+                FileInputStream fi = new FileInputStream(f);
+                ObjectInputStream o = new ObjectInputStream(fi);
+                count = Integer.parseInt((String) o.readObject());
+                o.close();
+                fi.close();
+
+            } catch (ClassNotFoundException e){
+            }
+            Log.d("Main", "count is " + count);
+
             if (count == 0) {
+
                 list.setEnabled(false);
                 list.setVisibility(View.INVISIBLE);
                 text.setVisibility(View.VISIBLE);
@@ -84,18 +95,21 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        //mediaPlayer = new MediaPlayer();
+
+                        String filename = Integer.toString(position+1) + ".3gp";
                         try {
+                            mediaPlayer = new MediaPlayer();
                             mediaPlayer.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()
-                                    + "/" + (position+1) + ".3gp");
+                                    + "/" + filename);
                             mediaPlayer.prepare();
+                            mediaPlayer.start();
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (IllegalStateException e){
 
                         }
-                        mediaPlayer.start();
-                        //Toast.makeText(MainActivity.this, "Playing", Toast.LENGTH_SHORT).show();
+
+                        Toast.makeText(MainActivity.this, "Playing " + filename, Toast.LENGTH_SHORT).show();
                     }
 
                 });
